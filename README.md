@@ -6,7 +6,7 @@ This project is previously hosted on a [Gist](https://gist.github.com/Jamesits/6
 
 ## WARNING
 
-> Your warranty is now void. I am not responsible for bricked devices, dead HDDs and SSDs, unreplied tickets, thermonuclear war, or you getting fired because the alarm app failed. Please do some research if you have any concerns about this script before using it! YOU are choosing to make these modifications, and if you point the finger at me for messing up your device, I will laugh at you.
+> Your warranty is now void. I am not responsible for bricked devices, dead HDDs and SSDs, unreplied tickets, thermonuclear war, or you getting fired because your device is hacked to mine bitcoin. Please do some research if you have any concerns about this script before using it! YOU are choosing to make these modifications, and if you point the finger at me for messing up your device, I will laugh at you.
 
 * **PLEASE READ THIS DOCUMENTATION THROUGHLY BEFORE RUNNING**
 * CAUTION: ALL DATA ON YOUR DEVICE WILL BE LOST INSTANTLY! There is no way to get them back.
