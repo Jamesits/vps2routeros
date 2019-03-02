@@ -25,7 +25,7 @@ The target device:
 * is a physical device or a full-virtualized VM
 * runs Ubuntu 16.04 or higher (we recommend Ubuntu 16.04; other distros are not tested)
 
-Here is a [VPS provider compatibility list](wiki/Compatibility-List). Contribution is welcomed.
+Here is a [VPS provider compatibility list](https://github.com/Jamesits/vps2routeros/wiki/Compatibility-List). Contribution is welcomed.
 
 ### Running the script
 
