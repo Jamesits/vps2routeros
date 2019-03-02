@@ -25,6 +25,8 @@ The target device:
 * is a physical device or a full-virtualized VM
 * runs Ubuntu 16.04 or higher (we recommend Ubuntu 16.04; other distros are not tested)
 
+Here is a [VPS provider compatibility list](wiki/Compatibility-List). Contribution is welcomed.
+
 ### Running the script
 
 1\. download this script to the target computer:
@@ -54,3 +56,9 @@ Login with WinBox or HTTP or SSH using username `admin` and an empty password, t
 
 * [A detailed explanation of this script written by me](https://blog.swineson.me/install-routeros-on-any-ubuntu-vps/) (in Chinese)
 * This script is originated from [this post on DigitalOcean forum](https://www.digitalocean.com/community/questions/installing-mikrotik-routeros)
+
+## Donation
+
+If this project is helpful to you, please consider buying me a coffee.
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Jamesits) or [PayPal](https://paypal.me/Jamesits)
