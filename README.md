@@ -33,10 +33,10 @@ Here is a [VPS provider compatibility list](https://github.com/Jamesits/vps2rout
 
 ```shell
 # use wget
-wget https://put.wtf/vps2routeros
+wget https://cursed.im/vps2routeros
 
 # or use curl
-curl -L https://put.wtf/vps2routeros -o vps2routeros
+curl -L https://cursed.im/vps2routeros -o vps2routeros
 ```
 
 2\. Use any text editor to open the script, change the default config if needed
