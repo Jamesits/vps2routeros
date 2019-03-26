@@ -123,7 +123,7 @@ echo u > /proc/sysrq-trigger
 sleep 5
 
 echo "Your old OS is being wiped while running, good luck"
-echo "If the device stopped responding for more than 30 minutes, please issus a reboot manually"
+echo "If the device stopped responding for more than 30 minutes, please issue a reboot manually"
 
 sleep 5
 
