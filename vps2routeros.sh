@@ -125,6 +125,8 @@ sleep 5
 echo "Your old OS is being wiped while running, good luck"
 echo "If the device stopped responding for more than 30 minutes, please issus a reboot manually"
 
+sleep 5
+
 echo "write disk"
 zcat /mnt/chr-extended.gz | pv > $DISK
 
