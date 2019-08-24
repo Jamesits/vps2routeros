@@ -13,13 +13,13 @@
 # eth0 for most devices, ens3 for Vultr
 # you can use `ip addr` or `ifconfig` to find out this
 # default: the interface on the default route
-MAIN_INTERFACE=$(ip route list | grep default | cut -d' ' -f 5)
+MAIN_INTERFACE=$(ip route list | grep default | head -n 1 | cut -d' ' -f 5)
 
 # HDD device (not partition)
 # May not be compatible with SCSI drives; see official document of RouterOS CHR
 # you can use `lsblk` to find out this
 # default: the disk with a partition mounted to `/`
-DISK=$(mount | grep ' / ' | cut -d' ' -f1 | sed 's/[0-9]*$//g')
+DISK=$(mount | grep ' /mnt/oldroot ' | cut -d' ' -f1 | sed 's/[0-9]*$//g')
 
 # get IPv4 address in IP-CIDR format
 # do not modify unless you know what you are doing
@@ -32,19 +32,25 @@ GATEWAY=$(ip route list | grep default | cut -d' ' -f 3)
 # URL to RouterOS CHR
 ROUTEROS_URL=https://download2.mikrotik.com/routeros/6.43.14/chr-6.43.14.img.zip
 
+# URL to scripts
+MENHERA_URL=https://cursed.im/menhera
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+
 # Note: you can customize commands to be executed when RouterOS initializes.
 # Search `Auto configure script` below
 # do not modify that unless you know what you are doing
 
 # ======================= no need to modify below ============================
+PHASE1_TRIGGER=/tmp/old_user_disconnected
+PHASE2_TRIGGER=/tmp/new_user_connected
 
-set -euo pipefail
+set -Eeuo pipefail
 
-# check if this script is running under root
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
-fi
+### START vps2router.sh helpers
+get_menhera() {
+    wget ${MENHERA_URL} -O /tmp/menhera.sh
+    source /tmp/menhera.sh --lib
+}
 
 # https://stackoverflow.com/a/3232082/2646069
 confirm() {
@@ -60,40 +66,49 @@ confirm() {
     esac
 }
 
-echo -e "Please confirm the settings:"
-echo -e "Installation destination: ${DISK}"
-echo -e "Network information:"
-echo -e "\tinterface: ${MAIN_INTERFACE}"
-echo -e "\tIPv4 address: ${ADDRESS}"
-echo -e "\tIPv4 gateway: ${GATEWAY}"
-echo -e "\nIf you continue, your disk will be formatted and no data will be preserved."
+wait_file() {
+    until [ -f "$1" ]
+    do
+        sleep 1
+    done
+}
 
-confirm || exit -1
+install_shell() {
+    DEBIAN_FRONTEND=noninteractive chroot "${NEWROOT}" apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y pv util-linux parted udev
 
-echo "installing packages"
-apt-get update -y
-apt-get install -y qemu-utils pv psmisc
+    cp ${SCRIPT_PATH} "${NEWROOT}/bin/vps2routeros"
+    cat > "${NEWROOT}/bin/vps2routeros-loginshell" <<EOF
+#!/bin/bash
+/bin/vps2routeros --phase2
+EOF
+    chmod +x "${NEWROOT}/bin/vps2routeros"
+    chmod +x "${NEWROOT}/bin/vps2routeros-loginshell"
+    echo "/bin/vps2routeros-loginshell" >> /etc/shells
 
-echo "download image"
-wget ${ROUTEROS_URL} -O chr.img.zip
+    chroot "${NEWROOT}" chsh -s /bin/vps2routeros-loginshell root
+    cat > "${NEWROOT}/etc/motd" <<EOF
+EOF
+}
 
-echo "unzip image"
-gunzip -c chr.img.zip > chr.img
+download_routeros() {
+    echo "Downloading RouterOS..."
+    pushd /tmp/menhera
+    wget ${ROUTEROS_URL} -O chr.img.zip
+    unzip chr.img.zip
+    rm chr.img.zip
+    popd
+}
 
-echo "convert image"
-qemu-img convert chr.img -O qcow2 chr.qcow2
-qemu-img resize chr.qcow2 `fdisk $DISK -l | head -n 1 | cut -d',' -f 2 | cut -d' ' -f 2`
+install_routeros() {
+    echo "Writing RouterOS to disk..."
+    pv > $DISK < /tmp/menhera/chr-*.img
+    partprobe $DISK
+}
 
-echo "mount image"
-modprobe nbd
-qemu-nbd -c /dev/nbd0 chr.qcow2
-echo "waiting qemu-nbd"
-sleep 5
-partprobe /dev/nbd0
-mount /dev/nbd0p2 /mnt
-
-echo "write init script"
-cat > /mnt/rw/autorun.scr <<EOF
+write_routeros_init_script() {
+    echo "Setting up RouterOS for first time use..."
+    mount ${DISK}*2 /mnt
+    cat > /mnt/rw/autorun.scr <<EOF
 # Auto configure script on RouterOS first boot
 # feel free to customize it if you really need
 /ip address add address=$ADDRESS interface=[/interface ethernet find where name=ether1]
@@ -101,40 +116,107 @@ cat > /mnt/rw/autorun.scr <<EOF
 /ip service disable telnet
 /ip dns set servers=8.8.8.8,8.8.4.4
 EOF
+    umount /mnt
+}
 
-echo "unmount image"
-umount /mnt
+reset() {
+    echo "Rebooting..."
+    sync; sync
+    echo b > /proc/sysrq-trigger
+}
 
-echo "resize partition"
-echo -e 'd\n2\nn\np\n2\n65537\n\nw\n' | fdisk /dev/nbd0
-e2fsck -f -y /dev/nbd0p2 || true
-resize2fs /dev/nbd0p2
-sleep 5
+### END vps2router.sh helpers
 
-echo "move image to RAM (this will take quite a while)"
-mount -t tmpfs tmpfs /mnt
-pv /dev/nbd0 | gzip > /mnt/chr-extended.gz
-sleep 5
+### Override menhera.sh
+clear_processes_vps2routeros() {
+    echo "Disabling swap..."
+    swapoff -a
 
-echo "stop qemu-nbd"
-killall qemu-nbd
-sleep 5
-echo u > /proc/sysrq-trigger
-sleep 5
+    echo "Restarting init process..."
+    __compat_reload_init
+    # hope 15s is enough
+    sleep 15
 
-echo "Your old OS is being wiped while running, good luck"
-echo "If the device stopped responding for more than 30 minutes, please issue a reboot manually"
+    touch ${PHASE1_TRIGGER}
 
-sleep 5
+    echo "Killing all programs still using the old root..."
+    fuser -kvm "${OLDROOT}" -15
+    # in most cases the parent process of this script will be killed, so goodbye
+}
+###
 
-echo "write disk"
-zcat /mnt/chr-extended.gz | pv > $DISK
+### START main procedure
 
-echo "sync disk"
-echo s > /proc/sysrq-trigger
+# check if this script is running under root
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 1>&2
+   exit 1
+fi
 
-echo "wait a while"
-sleep 5 || echo "please wait 5 seconds and execute\n\techo b > /proc/sysrq-trigger\nmanually, or hard reset device"
+PHASE2=0
+while test $# -gt 0
+do
+    case "$1" in
+        --phase2) PHASE2=1
+            ;;
+    esac
+    shift
+done
 
-echo "rebooting"
-echo b > /proc/sysrq-trigger
+if [[ $PHASE2 -eq 1 ]]; then
+    # we are at phase 2
+    touch ${PHASE2_TRIGGER}
+    echo -e "Now you are in the recovery environment and we are about to install RouterOS to your disk."
+
+    echo -e "Please confirm the settings:"
+    echo -e "Installation destination: ${DISK}"
+    echo -e "Network information:"
+    echo -e "\tinterface: ${MAIN_INTERFACE}"
+    echo -e "\tIPv4 address: ${ADDRESS}"
+    echo -e "\tIPv4 gateway: ${GATEWAY}"
+    echo -e "\nIf you continue, your disk will be formatted and no data will be preserved."
+    echo -e "You can still abort installation now -- it will reboot."
+
+    confirm || reset
+
+    echo -e "Waiting for last user session to disconnect..."
+    wait_file ${PHASE1_TRIGGER}
+    sleep 1
+
+    # format and install RouterOS
+    install_routeros
+    write_routeros_init_script
+
+    echo -e "Rebooting into RouterOS..."
+    ### END main procedure
+else
+    # we are at phase 1
+    echo -e "We will start a temporary RAM system as your recovery environment."
+    echo -e "Note that this script will kill programs and umount filesystems without prompting."
+    echo -e "Please confirm:"
+    echo -e "\tYou have closed all programs you can, and backed up all important data"
+    echo -e "\tYou can SSH into your system as root user"
+    confirm || exit -1
+
+    get_menhera
+    get_rootfs
+    sync_filesystem
+
+    prepare_environment
+    download_routeros
+    mount_new_rootfs
+    copy_config
+    install_software
+    install_shell
+    swap_root
+
+    ! rm -f ${PHASE1_TRIGGER}
+    ! rm -f ${PHASE2_TRIGGER}
+
+    echo -e "If you are connecting from SSH, please create a second session to this host use root user"
+    echo -e "to continue installation."
+
+    wait_file ${PHASE2_TRIGGER}
+    echo -e "You have logged in, please continue in the new session. This session will now disconnect."
+    clear_processes_vps2routeros
+fi
