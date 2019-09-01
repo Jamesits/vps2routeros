@@ -89,13 +89,15 @@ vps2routeros::install_routeros() {
     echo "Writing RouterOS to disk..."
     pv > $DISK < /tmp/menhera/chr-*.img
     
+    # in case something something is busy
+    sleep 5
+    
     # avoid racing with udev
     udevadm settle
     udevadm settle
     
-    # partx -a $DISK
-    # partx is always buggy, we use something better
-    blockdev --rereadpt $DISK
+    ! partx -a $DISK
+    ! blockdev --rereadpt $DISK
     
     udevadm settle
 }
