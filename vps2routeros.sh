@@ -108,9 +108,7 @@ install_routeros() {
 write_routeros_init_script() {
     echo "Setting up RouterOS for first time use..."
     mount ${DISK}*1 /mnt
-    cat > /mnt/rw/autorun.scr <<EOF
-# Auto configure script on RouterOS first boot
-# feel free to customize it if you really need
+    cat > /mnt/rw/DEFCONF <<EOF
 /ip address add address=$ADDRESS interface=[/interface ethernet find where name=ether1]
 /ip route add gateway=$GATEWAY
 /ip service disable telnet
@@ -154,10 +152,13 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 PHASE2=0
+PHASE2_DEBUG=1
 while test $# -gt 0
 do
     case "$1" in
         --phase2) PHASE2=1
+            ;;
+        --phase2-debug) PHASE2_DEBUG=1
             ;;
     esac
     shift
@@ -167,6 +168,11 @@ if [[ $PHASE2 -eq 1 ]]; then
     # we are at phase 2
     touch ${PHASE2_TRIGGER}
     echo -e "Now you are in the recovery environment and we are about to install RouterOS to your disk."
+    
+    if [[ $PHASE2_DEBUG -eq 1 ]]; then
+        echo -e "You are entering phase 2 debug shell. Exit to continue installation."
+        bash
+    fi
 
     echo -e "Please confirm the settings:"
     echo -e "Installation destination: ${DISK}"
