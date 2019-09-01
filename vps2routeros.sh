@@ -60,8 +60,11 @@ vps2routeros::wait_file() {
 }
 
 vps2routeros::install_shell() {
+    echo "Preparing for phase 2..."
+    # install dependencies of phase 2
     DEBIAN_FRONTEND=noninteractive chroot "${NEWROOT}" apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y pv util-linux udev
 
+    # install ourselves into new rootfs for phase 2 execution
     cp ${SCRIPT_PATH} "${NEWROOT}/bin/vps2routeros"
     cat > "${NEWROOT}/bin/vps2routeros-loginshell" <<EOF
 #!/bin/bash
@@ -72,6 +75,8 @@ EOF
     echo "/bin/vps2routeros-loginshell" >> /etc/shells
 
     chroot "${NEWROOT}" chsh -s /bin/vps2routeros-loginshell root
+    
+    # get rid of motd set up by menhera
     cat > "${NEWROOT}/etc/motd" <<EOF
 EOF
 }
@@ -102,14 +107,15 @@ vps2routeros::write_routeros_init_script() {
     echo "Setting up RouterOS for first time use..."
     
     udevadm settle
-    mount ${DISK}*1 /mnt
-    cat > /mnt/rw/autorun.scr <<EOF
+    mkdir -p /mnt/routeros
+    mount ${DISK}*1 /mnt/routeros
+    cat > /mnt/routeros/rw/autorun.scr <<EOF
 /ip address add address=$ADDRESS interface=[/interface ethernet find where name=ether1]
 /ip route add gateway=$GATEWAY
 /ip service disable telnet
 /ip dns set servers=8.8.8.8,8.8.4.4
 EOF
-    umount /mnt
+    umount /mnt/routeros
 }
 
 vps2routeros::reset() {
@@ -121,7 +127,7 @@ vps2routeros::reset() {
 
 # https://stackoverflow.com/a/3232082/2646069
 vps2routeros::confirm() {
-    read -r -p "Are you sure? [y/N] " response
+    read -r -p "Continue? [y/N] " response
     case "$response" in
         [yY][eE][sS]|[yY]) 
             true
@@ -132,20 +138,23 @@ vps2routeros::confirm() {
     esac
 }
 
-vps2routeros::clear_processes() {
+vps2routeros::clear_processes_phase1() {
     echo "Disabling swap..."
     swapoff -a
 
     echo "Restarting init process..."
     menhera::__compat_reload_init
-    # hope 15s is enough
+    
+    touch ${PHASE1_TRIGGER}
+}
+
+vps2routeros::clear_processes_phase2() {
+    # hope 15s is enough for systemd re-exec to finish
     sleep 15
 
-    touch ${PHASE1_TRIGGER}
-
     echo "Killing all programs still using the old root..."
+    OLDROOT=/mnt/oldroot
     fuser -kvm "${OLDROOT}" -15
-    # in most cases the parent process of this script will be killed, so goodbye
 }
 
 vps2routeros::umount_disks() {
@@ -181,29 +190,40 @@ do
 done
 
 if [[ $PHASE2 -eq 1 ]]; then
-    # we are at phase 2
+    # we are at phase 2, note that menhera.sh will not be loaded
     touch ${PHASE2_TRIGGER}
-    echo -e "Now you are in the recovery environment and we are about to install RouterOS to your disk."
     
     if [[ $PHASE2_DEBUG -eq 1 ]]; then
         echo -e "You are entering phase 2 debug shell. Exit to continue installation."
         bash
     fi
 
-    echo -e "Please confirm the settings:"
-    echo -e "Installation destination: ${DISK}"
-    echo -e "Network information:"
-    echo -e "\tinterface: ${MAIN_INTERFACE}"
-    echo -e "\tIPv4 address: ${ADDRESS}"
-    echo -e "\tIPv4 gateway: ${GATEWAY}"
-    echo -e "\nIf you continue, your disk will be formatted and no data will be preserved."
-    echo -e "You can still abort installation now -- it will reboot."
+    clear
+
+    cat >> /dev/fd/2 <<EOF
+VPS2RouterOS Phase 2 Checklist
+
+We are going to install RouterOS onto the disk. 
+
+Please confirm the settings:
+Installation destination: ${DISK}
+Network information:
+\tInterface: ${MAIN_INTERFACE}
+\tIPv4 address: ${ADDRESS}
+\tIPv4 gateway: ${GATEWAY}
+
+Type `y` and press enter to continue the installation; type `n` and press enter to regret. If you choose to regret, the server will reboot.
+
+IT IS YOUR LAST CHANCE TO REGRET.
+EOF
 
     vps2routeros::confirm || vps2routeros::reset
 
-    echo -e "Waiting for last user session to disconnect..."
+    echo -e "Waiting for the last SSH connection to finish..."
     vps2routeros::wait_file ${PHASE1_TRIGGER}
-    sleep 1
+    
+    # end everything started by the old init
+    vps2routeros::clear_processes_phase2
     
     # we don't need old root partitions any more
     vps2routeros::umount_disks
@@ -212,15 +232,42 @@ if [[ $PHASE2 -eq 1 ]]; then
     vps2routeros::install_routeros
     vps2routeros::write_routeros_init_script
 
-    echo -e "Rebooting into RouterOS..."
-    ### END main procedure
+    echo -e "Goodbye. See you in the RouterOS if everything is correct!"
+    vps2routeros::reset
 else
     # we are at phase 1
-    echo -e "We will start a temporary RAM system as your recovery environment."
-    echo -e "Note that this script will kill programs and umount filesystems without prompting."
-    echo -e "Please confirm:"
-    echo -e "\tYou have closed all programs you can, and backed up all important data"
-    echo -e "\tYou can SSH into your system as root user"
+    clear
+    
+    cat >> /dev/fd/2 <<EOF
+Welcome to VPS2RouterOS wizard. This script will convert your VPS to RouterOS. 
+
+If you choose to continue, you acknowledge that:
+\t* I will strictly follow the guide displayed on the screen
+\t* All data on this server will be lost permenantly
+\t* All running processes will be force killed
+\t* The installation might not succeed; in this case, you will need to manually reboot or reinstall the server using methods provided by your server provider, and this might result in a fee
+\t* You have read and agree on the license of this script: https://github.com/Jamesits/vps2routeros/blob/master/LICENSE
+
+Type `y` and press enter to continue the installation; type `n` and press enter to regret.
+EOF
+vps2routeros::confirm || exit -1
+
+    clear
+
+    cat >> /dev/fd/2 <<EOF
+VPS2RouterOS Phase 1 Checklist
+
+Please confirm:
+\t* You have closed all programs you can, and backed up all important data
+\t* You have disabled any firewall blocking SSH service (TCP port 22)
+\t* You can SSH into your system directly as root user (not via sudo, su, gksu or anything like that), either using password or SSH key (without PKI)
+\t* Your SSH client can maintain 2 SSH sessions to 1 server simultaneously
+\t*
+
+During the installation, other users except root will be unavailable. 
+
+If something is wrong, cancel now, fix them and re-run this script.
+EOF
     vps2routeros::confirm || exit -1
 
     vps2routeros::get_menhera
@@ -237,11 +284,30 @@ else
 
     ! rm -f ${PHASE1_TRIGGER}
     ! rm -f ${PHASE2_TRIGGER}
+    
+    clear
 
-    echo -e "If you are connecting from SSH, please create a second session to this host use root user"
-    echo -e "to continue installation."
+    cat >> /dev/fd/2 <<EOF
+VPS2RouterOS Phase Transition Checklist
+
+We need you to go the temporary recovery environment we have just set up. 
+
+Please execute:
+\t* Keep this SSH session connected
+\t* Start a new SSH session to this server with root user
+\t* Follow the instruction displayed on the new SSH session
+EOF
 
     vps2routeros::wait_file ${PHASE2_TRIGGER}
-    echo -e "You have logged in, please continue in the new session. This session will now disconnect."
-    vps2routeros::clear_processes
+    
+    clear
+
+    cat >> /dev/fd/2 <<EOF
+Please now follow the instruction displayed on the new SSH session. 
+
+Do not close this SSH session; it will automatically disconnect in less than 1 minute.
+EOF
+
+    vps2routeros::clear_processes_phase1
 fi
+### END main procedure
