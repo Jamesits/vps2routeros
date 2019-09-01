@@ -212,7 +212,7 @@ Network information:
 \tIPv4 address: ${ADDRESS}
 \tIPv4 gateway: ${GATEWAY}
 
-Type `y` and press enter to continue the installation; type `n` and press enter to regret. If you choose to regret, the server will reboot.
+Type y and press enter to continue the installation; type n and press enter to regret. If you choose to regret, the server will reboot.
 
 IT IS YOUR LAST CHANCE TO REGRET.
 EOF
@@ -248,7 +248,7 @@ If you choose to continue, you acknowledge that:
 \t* The installation might not succeed; in this case, you will need to manually reboot or reinstall the server using methods provided by your server provider, and this might result in a fee
 \t* You have read and agree on the license of this script: https://github.com/Jamesits/vps2routeros/blob/master/LICENSE
 
-Type `y` and press enter to continue the installation; type `n` and press enter to regret.
+Type y and press enter to continue the installation; type n and press enter to regret.
 EOF
 vps2routeros::confirm || exit -1
 
