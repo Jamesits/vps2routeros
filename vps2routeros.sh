@@ -152,6 +152,15 @@ vps2routeros::clear_processes() {
     # in most cases the parent process of this script will be killed, so goodbye
 }
 
+vps2routeros::umount_disks() {
+    echo "unmounting ${DISK}..."
+    
+    for f in ${DISK}*
+    do
+        umount "$f"
+    done
+}
+
 ### END vps2router.sh helpers
 
 ### START main procedure
@@ -226,6 +235,8 @@ else
     menhera::install_software
     vps2routeros::install_shell
     menhera::swap_root
+    # we don't need old root partitions any more
+    vps2routeros::umount_disks
 
     ! rm -f ${PHASE1_TRIGGER}
     ! rm -f ${PHASE2_TRIGGER}
