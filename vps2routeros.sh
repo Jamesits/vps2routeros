@@ -48,22 +48,8 @@ set -Eeuo pipefail
 
 ### START vps2router.sh helpers
 vps2routeros::get_menhera() {
-    wget ${MENHERA_URL} -O /tmp/menhera.sh
+    curl ${MENHERA_URL} -o /tmp/menhera.sh
     source /tmp/menhera.sh --lib
-}
-
-# https://stackoverflow.com/a/3232082/2646069
-vps2routeros::confirm() {
-    # call with a prompt string or use a default
-    read -r -p "${1:-Are you sure? [y/N]} " response
-    case "$response" in
-        [yY][eE][sS]|[yY]) 
-            true
-            ;;
-        *)
-            false
-            ;;
-    esac
 }
 
 vps2routeros::wait_file() {
@@ -102,7 +88,7 @@ vps2routeros::download_routeros() {
 vps2routeros::install_routeros() {
     echo "Writing RouterOS to disk..."
     pv > $DISK < /tmp/menhera/chr-*.img
-    partprobe $DISK
+    partx -a $DISK
 }
 
 write_routeros_init_script() {
@@ -131,7 +117,7 @@ vps2routeros::clear_processes() {
     swapoff -a
 
     echo "Restarting init process..."
-    __compat_reload_init
+    menhera::__compat_reload_init
     # hope 15s is enough
     sleep 15
 
@@ -183,7 +169,7 @@ if [[ $PHASE2 -eq 1 ]]; then
     echo -e "\nIf you continue, your disk will be formatted and no data will be preserved."
     echo -e "You can still abort installation now -- it will reboot."
 
-    vps2routeros::confirm || reset
+    menhera::confirm || reset
 
     echo -e "Waiting for last user session to disconnect..."
     vps2routeros::wait_file ${PHASE1_TRIGGER}
@@ -202,7 +188,7 @@ else
     echo -e "Please confirm:"
     echo -e "\tYou have closed all programs you can, and backed up all important data"
     echo -e "\tYou can SSH into your system as root user"
-    vps2routeros::confirm || exit -1
+    menhera::confirm || exit -1
 
     vps2routeros::get_menhera
     menhera::get_rootfs
