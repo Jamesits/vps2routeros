@@ -163,7 +163,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 PHASE2=0
-PHASE2_DEBUG=1
+PHASE2_DEBUG=0
 while test $# -gt 0
 do
     case "$1" in
