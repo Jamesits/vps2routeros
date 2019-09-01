@@ -121,8 +121,7 @@ vps2routeros::reset() {
 
 # https://stackoverflow.com/a/3232082/2646069
 vps2routeros::confirm() {
-    # call with a prompt string or use a default
-    read -r -p "${1:-Are you sure? [y/N]} " response
+    read -r -p "Are you sure? [y/N] " response
     case "$response" in
         [yY][eE][sS]|[yY]) 
             true
