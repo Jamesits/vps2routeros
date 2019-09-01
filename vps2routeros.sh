@@ -48,7 +48,7 @@ set -Eeuo pipefail
 
 ### START vps2router.sh helpers
 vps2routeros::get_menhera() {
-    wget ${MENHERA_URL} -O /tmp/menhera.sh
+    wget -q --show-progress ${MENHERA_URL} -O /tmp/menhera.sh
     source /tmp/menhera.sh --lib
 }
 
@@ -79,7 +79,7 @@ EOF
 vps2routeros::download_routeros() {
     echo "Downloading RouterOS..."
     pushd /tmp/menhera
-    wget ${ROUTEROS_URL} -O chr.img.zip
+    wget -q --show-progress ${ROUTEROS_URL} -O chr.img.zip
     unzip chr.img.zip
     rm chr.img.zip
     popd
