@@ -115,7 +115,8 @@ EOF
 vps2routeros::reset() {
     echo "Rebooting..."
     sync; sync
-    echo b > /proc/sysrq-trigger
+    ! echo b > /proc/sysrq-trigger
+    reboot
 }
 
 # https://stackoverflow.com/a/3232082/2646069
