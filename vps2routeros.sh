@@ -48,7 +48,7 @@ set -Eeuo pipefail
 
 ### START vps2router.sh helpers
 vps2routeros::get_menhera() {
-    curl ${MENHERA_URL} -o /tmp/menhera.sh
+    wget ${MENHERA_URL} -O /tmp/menhera.sh
     source /tmp/menhera.sh --lib
 }
 
