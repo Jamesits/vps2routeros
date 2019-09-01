@@ -141,9 +141,6 @@ vps2routeros::confirm() {
 }
 
 vps2routeros::clear_processes_phase1() {
-    echo "Disabling swap..."
-    swapoff -a
-
     echo "Restarting init process..."
     menhera::__compat_reload_init
     
@@ -158,6 +155,9 @@ vps2routeros::clear_processes_phase2() {
     echo "Killing all programs still using the old root..."
     OLDROOT=/mnt/oldroot
     fuser -kvm "${OLDROOT}" -15
+    
+    echo "Disabling swap..."
+    swapoff -a
 }
 
 vps2routeros::umount_disks() {
