@@ -103,7 +103,7 @@ vps2routeros::write_routeros_init_script() {
     
     udevadm settle
     mount ${DISK}*1 /mnt
-    cat > /mnt/rw/DEFCONF <<EOF
+    cat > /mnt/rw/autorun.scr <<EOF
 /ip address add address=$ADDRESS interface=[/interface ethernet find where name=ether1]
 /ip route add gateway=$GATEWAY
 /ip service disable telnet
