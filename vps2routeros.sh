@@ -6,27 +6,20 @@
 # Please read the documentation prior to running this
 # You have been warned
 
-# ======================= please change these =================================
-# your network interface to internet
+### START config
+
+# your default network interface to internet
 # this is used to auto configure IPv4 after reboot
-# (this may not work for every device)
-# eth0 for most devices, ens3 for Vultr
-# you can use `ip addr` or `ifconfig` to find out this
-# default: the interface on the default route
 MAIN_INTERFACE=$(ip route list | grep default | head -n 1 | cut -d' ' -f 5)
 
 # HDD device (not partition)
 # May not be compatible with SCSI drives; see official document of RouterOS CHR
-# you can use `lsblk` to find out this
-# default: the disk with a partition mounted to `/`
 DISK=$(mount | grep ' /mnt/oldroot ' | cut -d' ' -f1 | sed 's/[0-9]*$//g')
 
 # get IPv4 address in IP-CIDR format
-# do not modify unless you know what you are doing
 ADDRESS=$(ip addr show $MAIN_INTERFACE | grep global | cut -d' ' -f 6 | head -n 1)
 
 # get gateway IP
-# do not modify unless you know what you are doing
 GATEWAY=$(ip route list | grep default | cut -d' ' -f 3)
 
 # URL to RouterOS CHR
@@ -36,13 +29,11 @@ ROUTEROS_URL=https://download2.mikrotik.com/routeros/6.43.14/chr-6.43.14.img.zip
 MENHERA_URL=https://cursed.im/menhera
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 
-# Note: you can customize commands to be executed when RouterOS initializes.
-# Search `Auto configure script` below
-# do not modify that unless you know what you are doing
-
-# ======================= no need to modify below ============================
+# mutex files
 PHASE1_TRIGGER=/tmp/old_user_disconnected
 PHASE2_TRIGGER=/tmp/new_user_connected
+
+### END Phase 2 auto config
 
 set -Eeuo pipefail
 
