@@ -60,7 +60,7 @@ vps2routeros::wait_file() {
 }
 
 vps2routeros::install_shell() {
-    DEBIAN_FRONTEND=noninteractive chroot "${NEWROOT}" apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y pv util-linux parted udev
+    DEBIAN_FRONTEND=noninteractive chroot "${NEWROOT}" apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y pv util-linux udev
 
     cp ${SCRIPT_PATH} "${NEWROOT}/bin/vps2routeros"
     cat > "${NEWROOT}/bin/vps2routeros-loginshell" <<EOF
