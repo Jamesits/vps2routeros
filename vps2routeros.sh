@@ -94,11 +94,22 @@ vps2routeros::install_routeros() {
     echo "Writing RouterOS to disk..."
     pv > $DISK < /tmp/menhera/chr-*.img
 
+    echo "Waiting for kernel to recognize the new disk..."
     # avoid racing with udev
     udevadm settle
+    sleep 1
     
     ! partx -a $DISK
-    ! blockdev --rereadpt $DISK
+    udevadm settle
+    sleep 1
+    
+    # we have to retry until it works
+    while true; do
+        if blockdev --rereadpt $DISK; then
+            break
+        fi
+        sleep 1
+    done
     
     udevadm settle
 }
@@ -149,6 +160,7 @@ vps2routeros::clear_processes_phase1() {
 }
 
 vps2routeros::clear_processes_phase2() {
+    echo -e "Waiting for init re-exec..."
     # hope 15s is enough for systemd re-exec to finish
     sleep 15
 
@@ -158,7 +170,7 @@ vps2routeros::clear_processes_phase2() {
 }
 
 vps2routeros::umount_disks() {
-    echo "unmounting ${DISK}..."
+    echo "unmounting all partitions on disk ${DISK}..."
     
     for f in ${DISK}*
     do
@@ -298,16 +310,13 @@ Please execute:
 EOF
 
     vps2routeros::wait_file ${PHASE2_TRIGGER}
+    vps2routeros::clear_processes_phase1
     
     clear
 
     cat >> /dev/fd/2 <<EOF
-Please now follow the instruction displayed on the new SSH session. 
-
-Do not close this SSH session; it will automatically disconnect in less than 1 minute.
+Please now follow the instruction displayed on the new SSH session. This session will automatically disconnect in less than 1 minute.
 EOF
-
-    vps2routeros::clear_processes_phase1
     
     # Now we have done our job and can only wait to be killed
     while true; do sleep 1; done
