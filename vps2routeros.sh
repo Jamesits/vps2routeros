@@ -208,9 +208,9 @@ We are going to install RouterOS onto the disk.
 Please confirm the settings:
 Installation destination: ${DISK}
 Network information:
-\tInterface: ${MAIN_INTERFACE}
-\tIPv4 address: ${ADDRESS}
-\tIPv4 gateway: ${GATEWAY}
+    Interface: ${MAIN_INTERFACE}
+    IPv4 address: ${ADDRESS}
+    IPv4 gateway: ${GATEWAY}
 
 Type y and press enter to continue the installation; type n and press enter to regret. If you choose to regret, the server will reboot.
 
@@ -242,11 +242,11 @@ else
 Welcome to VPS2RouterOS wizard. This script will convert your VPS to RouterOS. 
 
 If you choose to continue, you acknowledge that:
-\t* I will strictly follow the guide displayed on the screen
-\t* All data on this server will be lost permenantly
-\t* All running processes will be force killed
-\t* The installation might not succeed; in this case, you will need to manually reboot or reinstall the server using methods provided by your server provider, and this might result in a fee
-\t* You have read and agree on the license of this script: https://github.com/Jamesits/vps2routeros/blob/master/LICENSE
+    * I will strictly follow the guide displayed on the screen
+    * All data on this server will be lost permenantly
+    * All running processes will be force killed
+    * The installation might not succeed; in this case, you will need to manually reboot or reinstall the server using methods provided by your server provider, and this might result in a fee
+    * You have read and agree on the license of this script: https://github.com/Jamesits/vps2routeros/blob/master/LICENSE
 
 Type y and press enter to continue the installation; type n and press enter to regret.
 EOF
@@ -258,11 +258,10 @@ vps2routeros::confirm || exit -1
 VPS2RouterOS Phase 1 Checklist
 
 Please confirm:
-\t* You have closed all programs you can, and backed up all important data
-\t* You have disabled any firewall blocking SSH service (TCP port 22)
-\t* You can SSH into your system directly as root user (not via sudo, su, gksu or anything like that), either using password or SSH key (without PKI)
-\t* Your SSH client can maintain 2 SSH sessions to 1 server simultaneously
-\t*
+    * You have closed all programs you can, and backed up all important data
+    * You have disabled any firewall blocking SSH service (TCP port 22)
+    * You can SSH into your system directly as root user (not via sudo, su, gksu or anything like that), either using password or SSH key (without PKI)
+    * Your SSH client can maintain 2 SSH sessions to 1 server simultaneously
 
 During the installation, other users except root will be unavailable. 
 
@@ -293,9 +292,9 @@ VPS2RouterOS Phase Transition Checklist
 We need you to go the temporary recovery environment we have just set up. 
 
 Please execute:
-\t* Keep this SSH session connected
-\t* Start a new SSH session to this server with root user
-\t* Follow the instruction displayed on the new SSH session
+    * Keep this SSH session connected
+    * Start a new SSH session to this server with root user
+    * Follow the instruction displayed on the new SSH session
 EOF
 
     vps2routeros::wait_file ${PHASE2_TRIGGER}
