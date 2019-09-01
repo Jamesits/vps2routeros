@@ -88,7 +88,9 @@ vps2routeros::download_routeros() {
 vps2routeros::install_routeros() {
     echo "Writing RouterOS to disk..."
     pv > $DISK < /tmp/menhera/chr-*.img
-    partx -a $DISK
+    # partx -a $DISK
+    # partx is always buggy, we use something better
+    blockdev --rereadpt $DISK
 }
 
 write_routeros_init_script() {
