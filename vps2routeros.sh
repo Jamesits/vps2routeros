@@ -153,7 +153,7 @@ vps2routeros::umount_disks() {
     
     for f in ${DISK}*
     do
-        umount "$f"
+        ! umount "$f"
     done
 }
 
