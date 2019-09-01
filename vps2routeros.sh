@@ -88,12 +88,8 @@ vps2routeros::download_routeros() {
 vps2routeros::install_routeros() {
     echo "Writing RouterOS to disk..."
     pv > $DISK < /tmp/menhera/chr-*.img
-    
-    # in case something something is busy
-    sleep 5
-    
+
     # avoid racing with udev
-    udevadm settle
     udevadm settle
     
     ! partx -a $DISK
@@ -208,6 +204,9 @@ if [[ $PHASE2 -eq 1 ]]; then
     echo -e "Waiting for last user session to disconnect..."
     vps2routeros::wait_file ${PHASE1_TRIGGER}
     sleep 1
+    
+    # we don't need old root partitions any more
+    vps2routeros::umount_disks
 
     # format and install RouterOS
     vps2routeros::install_routeros
@@ -235,8 +234,6 @@ else
     menhera::install_software
     vps2routeros::install_shell
     menhera::swap_root
-    # we don't need old root partitions any more
-    vps2routeros::umount_disks
 
     ! rm -f ${PHASE1_TRIGGER}
     ! rm -f ${PHASE2_TRIGGER}
