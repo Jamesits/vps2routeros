@@ -53,7 +53,7 @@ vps2routeros::get_menhera() {
 }
 
 # https://stackoverflow.com/a/3232082/2646069
-confirm() {
+vps2routeros::confirm() {
     # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response
     case "$response" in
