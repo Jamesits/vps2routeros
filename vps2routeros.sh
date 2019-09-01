@@ -205,8 +205,8 @@ else
     vps2routeros::confirm || exit -1
 
     vps2routeros::get_menhera
-    vps2routeros::get_rootfs
-    vps2routeros::sync_filesystem
+    menhera::get_rootfs
+    menhera::sync_filesystem
 
     menhera::prepare_environment
     vps2routeros::download_routeros
