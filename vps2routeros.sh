@@ -93,7 +93,7 @@ vps2routeros::install_routeros() {
     blockdev --rereadpt $DISK
 }
 
-write_routeros_init_script() {
+vps2routeros::write_routeros_init_script() {
     echo "Setting up RouterOS for first time use..."
     mount ${DISK}*1 /mnt
     cat > /mnt/rw/DEFCONF <<EOF
