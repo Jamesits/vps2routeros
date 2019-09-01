@@ -308,5 +308,8 @@ Do not close this SSH session; it will automatically disconnect in less than 1 m
 EOF
 
     vps2routeros::clear_processes_phase1
+    
+    # Now we have done our job and can only wait to be killed
+    while true; do sleep 1; done
 fi
 ### END main procedure
