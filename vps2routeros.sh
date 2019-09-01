@@ -254,7 +254,7 @@ else
 Welcome to VPS2RouterOS wizard. This script will convert your VPS to RouterOS. 
 
 If you choose to continue, you acknowledge that:
-    * I will strictly follow the guide displayed on the screen
+    * You will strictly follow the guide displayed on the screen
     * All data on this server will be lost permenantly
     * All running processes will be force killed
     * The installation might not succeed; in this case, you will need to manually reboot or reinstall the server using methods provided by your server provider, and this might result in a fee
