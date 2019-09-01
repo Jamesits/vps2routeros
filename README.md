@@ -23,6 +23,7 @@ The target device:
 
 * is amd64 (sometimes called x86_64) architecture
 * is a physical device or a full-virtualized VM
+* minimum free memory 400MiB (anything less than this will probably cause the script to fail)
 * runs Debian 9.x or 10.x
 
 Here is a [VPS provider compatibility list](https://github.com/Jamesits/vps2routeros/wiki/Compatibility-List). Contribution is welcomed.
