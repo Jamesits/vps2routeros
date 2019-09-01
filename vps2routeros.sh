@@ -88,13 +88,22 @@ vps2routeros::download_routeros() {
 vps2routeros::install_routeros() {
     echo "Writing RouterOS to disk..."
     pv > $DISK < /tmp/menhera/chr-*.img
+    
+    # avoid racing with udev
+    udevadm settle
+    udevadm settle
+    
     # partx -a $DISK
     # partx is always buggy, we use something better
     blockdev --rereadpt $DISK
+    
+    udevadm settle
 }
 
 vps2routeros::write_routeros_init_script() {
     echo "Setting up RouterOS for first time use..."
+    
+    udevadm settle
     mount ${DISK}*1 /mnt
     cat > /mnt/rw/DEFCONF <<EOF
 /ip address add address=$ADDRESS interface=[/interface ethernet find where name=ether1]
