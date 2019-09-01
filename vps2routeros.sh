@@ -109,9 +109,20 @@ vps2routeros::reset() {
     echo b > /proc/sysrq-trigger
 }
 
-### END vps2router.sh helpers
+# https://stackoverflow.com/a/3232082/2646069
+vps2routeros::confirm() {
+    # call with a prompt string or use a default
+    read -r -p "${1:-Are you sure? [y/N]} " response
+    case "$response" in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
 
-### Override menhera.sh
 vps2routeros::clear_processes() {
     echo "Disabling swap..."
     swapoff -a
@@ -127,7 +138,8 @@ vps2routeros::clear_processes() {
     fuser -kvm "${OLDROOT}" -15
     # in most cases the parent process of this script will be killed, so goodbye
 }
-###
+
+### END vps2router.sh helpers
 
 ### START main procedure
 
@@ -169,7 +181,7 @@ if [[ $PHASE2 -eq 1 ]]; then
     echo -e "\nIf you continue, your disk will be formatted and no data will be preserved."
     echo -e "You can still abort installation now -- it will reboot."
 
-    menhera::confirm || reset
+    vps2routeros::confirm || reset
 
     echo -e "Waiting for last user session to disconnect..."
     vps2routeros::wait_file ${PHASE1_TRIGGER}
@@ -188,7 +200,7 @@ else
     echo -e "Please confirm:"
     echo -e "\tYou have closed all programs you can, and backed up all important data"
     echo -e "\tYou can SSH into your system as root user"
-    menhera::confirm || exit -1
+    vps2routeros::confirm || exit -1
 
     vps2routeros::get_menhera
     menhera::get_rootfs
