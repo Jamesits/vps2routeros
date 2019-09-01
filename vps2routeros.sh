@@ -47,7 +47,7 @@ PHASE2_TRIGGER=/tmp/new_user_connected
 set -Eeuo pipefail
 
 ### START vps2router.sh helpers
-get_menhera() {
+vps2routeros::get_menhera() {
     wget ${MENHERA_URL} -O /tmp/menhera.sh
     source /tmp/menhera.sh --lib
 }
@@ -66,14 +66,14 @@ confirm() {
     esac
 }
 
-wait_file() {
+vps2routeros::wait_file() {
     until [ -f "$1" ]
     do
         sleep 1
     done
 }
 
-install_shell() {
+vps2routeros::install_shell() {
     DEBIAN_FRONTEND=noninteractive chroot "${NEWROOT}" apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y pv util-linux parted udev
 
     cp ${SCRIPT_PATH} "${NEWROOT}/bin/vps2routeros"
@@ -90,7 +90,7 @@ EOF
 EOF
 }
 
-download_routeros() {
+vps2routeros::download_routeros() {
     echo "Downloading RouterOS..."
     pushd /tmp/menhera
     wget ${ROUTEROS_URL} -O chr.img.zip
@@ -99,7 +99,7 @@ download_routeros() {
     popd
 }
 
-install_routeros() {
+vps2routeros::install_routeros() {
     echo "Writing RouterOS to disk..."
     pv > $DISK < /tmp/menhera/chr-*.img
     partprobe $DISK
@@ -117,7 +117,7 @@ EOF
     umount /mnt
 }
 
-reset() {
+vps2routeros::reset() {
     echo "Rebooting..."
     sync; sync
     echo b > /proc/sysrq-trigger
@@ -126,7 +126,7 @@ reset() {
 ### END vps2router.sh helpers
 
 ### Override menhera.sh
-clear_processes_vps2routeros() {
+vps2routeros::clear_processes() {
     echo "Disabling swap..."
     swapoff -a
 
@@ -183,15 +183,15 @@ if [[ $PHASE2 -eq 1 ]]; then
     echo -e "\nIf you continue, your disk will be formatted and no data will be preserved."
     echo -e "You can still abort installation now -- it will reboot."
 
-    confirm || reset
+    vps2routeros::confirm || reset
 
     echo -e "Waiting for last user session to disconnect..."
-    wait_file ${PHASE1_TRIGGER}
+    vps2routeros::wait_file ${PHASE1_TRIGGER}
     sleep 1
 
     # format and install RouterOS
-    install_routeros
-    write_routeros_init_script
+    vps2routeros::install_routeros
+    vps2routeros::write_routeros_init_script
 
     echo -e "Rebooting into RouterOS..."
     ### END main procedure
@@ -202,19 +202,19 @@ else
     echo -e "Please confirm:"
     echo -e "\tYou have closed all programs you can, and backed up all important data"
     echo -e "\tYou can SSH into your system as root user"
-    confirm || exit -1
+    vps2routeros::confirm || exit -1
 
-    get_menhera
-    get_rootfs
-    sync_filesystem
+    vps2routeros::get_menhera
+    vps2routeros::get_rootfs
+    vps2routeros::sync_filesystem
 
-    prepare_environment
-    download_routeros
-    mount_new_rootfs
-    copy_config
-    install_software
-    install_shell
-    swap_root
+    menhera::prepare_environment
+    vps2routeros::download_routeros
+    menhera::mount_new_rootfs
+    menhera::copy_config
+    menhera::install_software
+    vps2routeros::install_shell
+    menhera::swap_root
 
     ! rm -f ${PHASE1_TRIGGER}
     ! rm -f ${PHASE2_TRIGGER}
@@ -222,7 +222,7 @@ else
     echo -e "If you are connecting from SSH, please create a second session to this host use root user"
     echo -e "to continue installation."
 
-    wait_file ${PHASE2_TRIGGER}
+    vps2routeros::wait_file ${PHASE2_TRIGGER}
     echo -e "You have logged in, please continue in the new session. This session will now disconnect."
-    clear_processes_vps2routeros
+    vps2routeros::clear_processes
 fi
