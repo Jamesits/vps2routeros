@@ -107,7 +107,7 @@ install_routeros() {
 
 write_routeros_init_script() {
     echo "Setting up RouterOS for first time use..."
-    mount ${DISK}*2 /mnt
+    mount ${DISK}*1 /mnt
     cat > /mnt/rw/autorun.scr <<EOF
 # Auto configure script on RouterOS first boot
 # feel free to customize it if you really need
