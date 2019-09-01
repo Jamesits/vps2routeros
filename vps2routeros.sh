@@ -200,7 +200,7 @@ if [[ $PHASE2 -eq 1 ]]; then
     echo -e "\nIf you continue, your disk will be formatted and no data will be preserved."
     echo -e "You can still abort installation now -- it will reboot."
 
-    vps2routeros::confirm || reset
+    vps2routeros::confirm || vps2routeros::reset
 
     echo -e "Waiting for last user session to disconnect..."
     vps2routeros::wait_file ${PHASE1_TRIGGER}
