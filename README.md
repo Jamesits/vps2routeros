@@ -24,7 +24,8 @@ The target device:
 * is amd64 (sometimes called x86_64) architecture
 * is a physical device or a full-virtualized VM
 * minimum free memory 400MiB (anything less than this will probably cause the script to fail)
-* runs Debian 9.x or 10.x
+* runs Debian 9.x or 10.x (Other OSes are not tested)
+* does not have `systemd-resolved` running
 
 Here is a [VPS provider compatibility list](https://github.com/Jamesits/vps2routeros/wiki/Compatibility-List). Contribution is welcomed.
 
@@ -52,9 +53,3 @@ sudo ./vps2routeros
 4\. Set a password:
 
 Login with WinBox or HTTP or SSH using username `admin` and an empty password, then change the password.
-
-## Donation
-
-If this project is helpful to you, please consider buying me a coffee.
-
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Jamesits) or [PayPal](https://paypal.me/Jamesits)
