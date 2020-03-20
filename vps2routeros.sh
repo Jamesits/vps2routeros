@@ -72,7 +72,7 @@ confirm || exit -1
 
 echo "installing packages"
 apt-get update -y
-apt-get install -y qemu-utils pv psmisc
+apt-get install -y qemu-utils pv psmisc parted
 
 echo "download image"
 wget ${ROUTEROS_URL} -O chr.img.zip
